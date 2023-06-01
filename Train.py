@@ -4,6 +4,7 @@ import os
 import argparse
 from datetime import datetime
 from lib.pvt import Hitnet
+from lib.pvt_test import Hitnet_V2
 from utils.dataloader import get_loader, test_dataset
 from utils.utils import clip_gradient, adjust_lr, AvgMeter
 import torch.nn.functional as F
@@ -11,9 +12,13 @@ import numpy as np
 import logging
 from tensorboardX import SummaryWriter
 import matplotlib.pyplot as plt
+from torchsummary import summary
 ####
 ####CUDA_VISIBLE_DEVICES=0 python3 Train.py
 ####
+TEST_FLAG = False
+# TODO: upsample deprecated
+
 def load_matched_state_dict(model, state_dict, print_stats=True):
     """
     Only loads weights that matched in key and shape. Ignore other weights.
@@ -54,8 +59,11 @@ def val(model, epoch, save_path, writer):
         # test_loader = test_dataset(image_root=opt.test_path + 'Imgs/',
         #                           gt_root=opt.test_path + 'GT/',
         #                           testsize=opt.trainsize)
-        test_loader = test_dataset(image_root=opt.test_path + '/COD10K/Imgs/',
-                            gt_root=opt.test_path + '/COD10K/GT/',
+        # test_loader = test_dataset(image_root=opt.test_path + '/COD10K/Image/',
+        #                     gt_root=opt.test_path + '/COD10K/GT/',
+        #                     testsize=opt.trainsize)
+        test_loader = test_dataset(image_root=opt.test_path + '/Image/',
+                            gt_root=opt.test_path + '/GT/',
                             testsize=opt.trainsize)
 
         for i in range(test_loader.size):
@@ -176,13 +184,15 @@ if __name__ == '__main__':
 
 
     # ---- build models ----
-    # torch.cuda.set_device(0)  # set your gpu device
-    model = Hitnet().cuda()
-
+    torch.cuda.set_device(1)  # set your gpu device
+    if TEST_FLAG:
+        model = Hitnet_V2().cuda()
+    else:
+        model = Hitnet().cuda() 
 
     if opt.load is not None:
         pretrained_dict=torch.load(opt.load)
-        print('!!!!!!Sucefully load model from!!!!!! ', opt.load)
+        print('!!!!!!Successfully load model from!!!!!! ', opt.load)
         load_matched_state_dict(model, pretrained_dict)
 
     # def count_parameters(model):
